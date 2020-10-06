@@ -11,3 +11,10 @@ var connection = mysql.createConnection({
     password: "Holiday15!",
     database: "employee_tracker"
 })
+
+// node server
+connection.connect(function(err) {
+    if (err) throw err;
+    console.log("connected as id " + connection.threadId);
+    runApp();
+  })
