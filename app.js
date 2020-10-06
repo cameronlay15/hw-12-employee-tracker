@@ -133,3 +133,44 @@ function addDepartment() {
         })
     })
   }
+
+// updates single employee role
+function updateRoles() {
+    connection.query(`SELECT CONCAT(first_name, ' ', last_name) AS name FROM employee;`, function (err, res) {
+      if (err) throw err;
+      inquirer.prompt({
+        name: "employee",
+        type: "list",
+        message: "Which Employee:",
+        choices: res
+        }).then(answer => {
+            connection.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.employee}";`, function (err, res) {
+              if (err) throw err;
+              const employeeId = res[0].id;
+              const query = `SELECT title FROM role`;
+              connection.query(query, function (err, res) {
+                if (err) throw err;
+                let choicesArray = res.map(item => { return item.title });
+                inquirer.prompt({
+                  name: "newRole",
+                  type: "list",
+                  message: "Which Role:",
+                  choices: choicesArray
+                  }).then(answer => {
+                      const query = `SELECT id FROM role WHERE title = "${answer.newRole}";`;
+                      connection.query(query, function (err, res) {
+                        if (err) throw err;
+                        const roleId = res[0].id;
+                        const query = `UPDATE employee SET role_id = ${roleId} WHERE id = ${employeeId};`
+                        connection.query(query, function (err, res) {
+                          if (err) throw err;
+                          console.log("** Role Updated **")
+                          runApp();
+                        })
+                      })
+                    })
+              })
+            })
+          })
+    })
+  }
