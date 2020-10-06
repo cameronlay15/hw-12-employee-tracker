@@ -174,3 +174,67 @@ function updateRoles() {
           })
     })
   }
+
+// creates a new employee row
+function addEmployees() {
+    const query = `SELECT title FROM role`;
+    connection.query(query, function (err, res) {
+      if (err) throw err;
+      let choicesArray = res.map(item => { return item.title });
+      inquirer.prompt([
+        {
+        name: "firstName",
+        type: "input",
+        message: "First Name:"
+        },
+        {
+        name: "lastName",
+        type: "input",
+        message: "Last Name:"
+        },
+        {
+        name: "role",
+        type: "list",
+        message: "Which Role:",
+        choices: choicesArray
+        }
+    ]).then(answer => {
+        const firstName = answer.firstName;
+        const lastName = answer.lastName;
+        const query = `SELECT id FROM role WHERE title = "${answer.role}";`;
+        connection.query(query, function (err, res) {
+          if (err) throw err;
+          const savedId = res[0].id;
+          const query = "SELECT CONCAT(first_name, ' ', last_name) AS name FROM employee;";
+          connection.query(query, function (err, res) {
+            if (err) throw err;
+            let choicesArray = res.map(item => { return item });
+            choicesArray.push({ name: "None" });
+            inquirer.prompt([{
+              name: "managerName",
+              type: "list",
+              message: "Employee Manager:",
+              choices: choicesArray
+              }]).then(answer => {
+                  if (answer.managerName === "None") {
+                  connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES ("${firstName}", "${lastName}", ${savedId});`, function (err, res) {
+                    if (err) throw err;
+                    console.log("** Employee Created **")
+                    runApp();
+                  })} else {
+                        const query = `SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = "${answer.managerName}";`;
+                        connection.query(query, function (err, res) {
+                        if (err) throw err;
+                        connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${firstName}", "${lastName}", ${savedId}, ${res[0].id});`, function (err, res) {
+                          if (err) throw err;
+                          console.log("** Employee Created **")
+                          runApp();
+                        })
+                      })
+                    }
+                })
+          })
+        })
+    })
+})
+}
