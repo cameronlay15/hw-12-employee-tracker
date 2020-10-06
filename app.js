@@ -80,3 +80,56 @@ function viewDepartments() {
       runApp();
     })
   }
+
+  // create/add single department
+function addDepartment() {
+    inquirer.prompt({
+      name: "addDepartment",
+      type: "input",
+      message: "Department Name:"
+    }).then(answer => {
+        let query = `INSERT INTO department (name) VALUES ("${answer.addDepartment}");`;
+        connection.query(query, function (err, res) {
+          if (err) throw err;
+          console.log("** Department Created **")
+          runApp();
+        })
+    })
+  }
+  
+  // create/add single role 
+  function addRoles() {
+    const query = `SELECT name FROM department`;
+    connection.query(query, function (err, res) {
+      if (err) throw err;
+      inquirer.prompt([
+        {
+        name: "title",
+        type: "input",
+        message: "Role Title:"
+        }, 
+        {
+        name: "salary",
+        type: "input",
+        message: "Salary:"
+        }, 
+        {
+        name: "department",
+        type: "list",
+        message: "Which Department:",
+        choices: res
+        }
+        ]).then(answer => {
+            console.log(answer.department);
+            const query = `SELECT id FROM department WHERE name = "${answer.department}";`;
+            connection.query(query, function (err, res) {
+              if (err) throw err;
+              const savedId = res[0].id;
+              connection.query(`INSERT INTO role (title, salary, department_id) VALUES ("${answer.title}", ${answer.salary}, ${savedId});`, function (err, res) {
+              console.log("** Role Created **")
+              runApp();
+              })
+            })
+        })
+    })
+  }
